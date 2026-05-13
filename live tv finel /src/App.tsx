@@ -271,7 +271,7 @@ export default function App() {
         // Prefer live primary source for playback URLs (tokens can be IP-bound).
         // GitHub channels.json is used as a secondary enrichment/fallback source.
         const GITHUB_SOURCE = 'https://raw.githubusercontent.com/gptrworldtech/iptv-stream-control/main/channels.json';
-        const PRIMARY_LIVE_SOURCE = 'https://jow.vodep39240327.workers.dev/';
+        const PRIMARY_LIVE_SOURCE = 'https://pastefy.app/ZH3tseJk/raw';
         const BACKUP_SOURCE = 'https://raw.githubusercontent.com/etcvai/ExtenderMax/refs/heads/main/iptv.m3u8';
         const POWER_SOURCE = 'https://server.vodep39240327.workers.dev/channel/raw?=m3u';
         
