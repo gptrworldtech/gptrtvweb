@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Channels</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Scrollbar Hide */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Fade In Up Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        
+        /* Line Clamp */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-50 font-sans flex flex-col overflow-x-hidden">
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col w-full">
+        <div class="p-[25px] flex-1">
+            
+            <!-- Video Player Section -->
+            <div id="playerContainer" class="w-full max-w-5xl mx-auto mb-8">
+                <!-- Player will be injected here -->
+            </div>
+
+            <!-- Quick Access Buttons -->
+            <div class="flex flex-wrap gap-3 mb-6 relative">
+                
+                <!-- Sports Dropdown -->
+                <div class="relative z-50">
+                    <button id="sportsBtn" class="group px-4 py-2 rounded-lg border transition-all duration-300 flex items-center gap-2 bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500 hover:bg-slate-700/50">
+                        <i data-lucide="dribbble" class="w-4 h-4 text-indigo-400 group-hover:text-indigo-300"></i>
+                        <span id="sportsBtnText" class="text-sm font-medium group-hover:text-white">Sports</span>
+                        <i data-lucide="chevron-down" id="sportsChevron" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="sportsDropdown" class="hidden absolute top-full left-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+                        <button onclick="setCategory('Star Sports')" class="block w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white">Star Sports</button>
+                        <button onclick="setCategory('Sony Sports')" class="block w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white">Sony Sports</button>
+                        <button onclick="setCategory('Other Sports')" class="block w-full text-left px-4 py-2.5 text-sm transition-colors text-slate-200 hover:bg-slate-700 hover:text-white">Other Sports</button>
+                    </div>
+                </div>
+
+                <!-- Fancode Button -->
+                <a href="sports/fancode" class="group bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 transition-all duration-300 flex items-center gap-2 hover:border-indigo-500 hover:bg-slate-700/50">
+                    <img 
+                        src="https://play-lh.googleusercontent.com/lp1Tdhp75MQyrHqrsyRBV74HxoL3Ko8KRAjOUI1wUHREAxuuVwKR6vnamgvMEn4C4Q" 
+                        alt="Fancode" 
+                        class="w-4 h-4 rounded-sm grayscale opacity-70 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100" 
+                        onerror="this.src='https://picsum.photos/seed/fancode/16/16'"
+                    />
+                    <span class="text-sm font-medium text-slate-200 group-hover:text-white">Fancode</span>
+                </a>
+
+                <!-- Music Button -->
+                <a href="https://gandrettiraghu.vercel.app/" class="group bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 transition-all duration-300 flex items-center gap-2 hover:border-indigo-500 hover:bg-slate-700/50">
+                    <i data-lucide="music" class="w-4 h-4 text-indigo-400 group-hover:text-indigo-300"></i>
+                    <span class="text-sm font-medium text-slate-200 group-hover:text-white">Music Player</span>
+                </a>
+            </div>
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-[15px]">
+                <h2 class="text-[1.2rem] font-bold">Live Channels</h2>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full max-w-[400px] mb-4">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                <input 
+                    type="search" 
+                    id="searchInput"
+                    placeholder="Search channels..." 
+                    class="w-full bg-slate-900 border border-slate-700 py-2 pr-[15px] pl-[35px] rounded-lg text-sm text-white outline-none transition-all duration-300 focus:border-indigo-500 focus:shadow-[0_0_0_2px_rgba(99,102,241,0.2)]"
+                />
+            </div>
+
+            <!-- Categories -->
+            <div id="categoriesContainer" class="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
+                <!-- Categories will be injected here by JS -->
+            </div>
+
+            <!-- Dynamic List Container -->
+            <div id="channelsGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 pb-[40px]">
+                <!-- Channels will be injected here by JS -->
+            </div>
+
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center p-5 text-slate-400 text-[0.8rem] border-t border-slate-700 mt-auto shrink-0 space-y-2">
+            <p class="max-w-3xl mx-auto">
+                Disclaimer: This website is for educational purposes only. The links provided are not hosted on our servers but are collected from various sources on the internet.
+            </p>
+            <p>&copy; <span id="currentYear"></span> Gandreti Raghu. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Constants
+        const teluguKeywords = ['etv', 'gemini', 'maa', 'zee telugu', 'zee cinemalu', 'tv9', 'ntv', 'sakshi', 'abn', 'tv5', 'v6', '10 tv', '10tv', '99 tv', '99tv', 'hmtv', 'i news', 'inews', 'mahaa', 'studio n', 'telugu', 'bharat today', 'cv r', 'cvr', 'raj news'];
+        const teluguNewsKeywords = ['tv9', 'ntv', 'sakshi', 'abn', 'tv5', 'v6', '10 tv', '10tv', '99 tv', '99tv', 'hmtv', 'i news', 'inews', 'mahaa', 'studio n', 'bharat today', 'cv r', 'cvr', 'raj news', 'news'];
+        const categoryList = ['All', 'IPL 2026', 'Entertainment', 'Movies', 'Sports', 'Infotainment', 'News', 'Music'];
+
+        // State
+        let channels = [];
+        let searchTerm = '';
+        let selectedCategory = 'All';
+        let isSportsDropdownOpen = false;
+        let currentChannel = null;
+
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        const channelsGrid = document.getElementById('channelsGrid');
+        const sportsBtn = document.getElementById('sportsBtn');
+        const sportsDropdown = document.getElementById('sportsDropdown');
+        const sportsBtnText = document.getElementById('sportsBtnText');
+        const sportsChevron = document.getElementById('sportsChevron');
+        const playerContainer = document.getElementById('playerContainer');
+        
+        // Set current year
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Initialize App
+        async function init() {
+            // Initialize Lucide icons
+            lucide.createIcons();
+            
+            // Setup Event Listeners
+            setupEventListeners();
+            
+            // Render initial categories
+            renderCategories();
+            
+            // Show loading state
+            channelsGrid.innerHTML = `
+                <div class="col-span-full text-center p-10 text-slate-400 flex flex-col items-center">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-indigo-500 mb-4"></i>
+                    <p>Loading channels...</p>
+                </div>
+            `;
+            
+            renderPlayer();
+            lucide.createIcons();
+            
+            // Fetch Data
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/vaathala1/jow/main/output.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    channels = data;
+                }
+            } catch (error) {
+                channelsGrid.innerHTML = `
+                    <div class="col-span-full text-center p-10 text-red-500">
+                        <p>Failed to load channels. Please try again later.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render Channels
+            renderChannels();
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            searchInput.addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                renderChannels();
+            });
+
+            sportsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isSportsDropdownOpen = !isSportsDropdownOpen;
+                updateSportsDropdown();
+            });
+
+            document.addEventListener('click', () => {
+                if (isSportsDropdownOpen) {
+                    isSportsDropdownOpen = false;
+                    updateSportsDropdown();
+                }
+            });
+        }
+
+        // UI Updaters
+        function updateSportsDropdown() {
+            if (isSportsDropdownOpen) {
+                sportsDropdown.classList.remove('hidden');
+                sportsChevron.classList.add('rotate-180');
+            } else {
+                sportsDropdown.classList.add('hidden');
+                sportsChevron.classList.remove('rotate-180');
+            }
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            renderCategories();
+            renderChannels();
+            updateSportsBtnStyle();
+        }
+
+        function updateSportsBtnStyle() {
+            const isSportsActive = ['Sports', 'Star Sports', 'Sony Sports', 'Other Sports'].includes(selectedCategory);
+            
+            if (isSportsActive) {
+                sportsBtn.className = "group px-4 py-2 rounded-lg border transition-all duration-300 flex items-center gap-2 hover:border-indigo-500 hover:bg-slate-700/50 bg-indigo-500/20 border-indigo-500 text-indigo-300";
+                sportsBtnText.textContent = ['Star Sports', 'Sony Sports', 'Other Sports'].includes(selectedCategory) ? selectedCategory : 'Sports';
+                sportsBtn.querySelector('[data-lucide="dribbble"]').classList.replace('text-indigo-400', 'text-indigo-400');
+            } else {
+                sportsBtn.className = "group px-4 py-2 rounded-lg border transition-all duration-300 flex items-center gap-2 hover:border-indigo-500 hover:bg-slate-700/50 bg-slate-800 border-slate-700 text-slate-200";
+                sportsBtnText.textContent = 'Sports';
+            }
+        }
+
+        function renderPlayer() {
+            if (currentChannel) {
+                playerContainer.innerHTML = `
+                    <div class="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-700 relative group">
+                        <iframe
+                            src="${currentChannel.link}"
+                            class="w-full h-full border-0"
+                            allowfullscreen
+                            allow="autoplay; encrypted-media"
+                        ></iframe>
+                        <div class="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-md backdrop-blur-md border border-white/10 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            <span class="text-white text-xs font-semibold tracking-wide">${currentChannel.name || 'Unknown Channel'}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                playerContainer.innerHTML = `
+                    <div class="w-full aspect-video bg-slate-800/50 rounded-xl flex flex-col items-center justify-center border-2 border-slate-700 border-dashed">
+                        <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 shadow-inner">
+                            <i data-lucide="play-circle" class="w-8 h-8 text-slate-500"></i>
+                        </div>
+                        <p class="text-slate-400 font-medium text-sm sm:text-base">Select a channel below to start watching</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        function playChannel(index) {
+            const sortedChannels = [...channels].sort((a, b) => getChannelPriority(a) - getChannelPriority(b));
+            const filteredChannels = sortedChannels.filter(channel => {
+                const term = searchTerm.toLowerCase();
+                const matchesSearch = (channel.name || '').toLowerCase().includes(term) || 
+                                      (channel.group || '').toLowerCase().includes(term);
+                const matchesCategory = selectedCategory === 'All' || getChannelCategories(channel).includes(selectedCategory);
+                return matchesSearch && matchesCategory;
+            });
+            
+            if (filteredChannels[index]) {
+                currentChannel = filteredChannels[index];
+                renderPlayer();
+                renderChannels(); // Re-render to update active state
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function renderCategories() {
+            categoriesContainer.innerHTML = categoryList.map(cat => `
+                <button
+                    onclick="setCategory('${cat}')"
+                    class="px-3 py-1 rounded-full text-[0.8rem] font-medium whitespace-nowrap transition-all duration-300 ${
+                        selectedCategory === cat 
+                            ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.4)] border-transparent' 
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
+                    }"
+                >
+                    ${cat}
+                </button>
+            `).join('');
+            updateSportsBtnStyle();
+        }
+
+        // Logic Helpers
+        function getChannelPriority(channel) {
+            const name = (channel.name || '').toLowerCase();
+            const group = (channel.group || '').toLowerCase();
+
+            const isTelugu = teluguKeywords.some(kw => name.includes(kw) || group.includes('telugu'));
+            const isHD = name.includes('hd');
+            const isNews = teluguNewsKeywords.some(kw => name.includes(kw)) || group.includes('news');
+            const isSports = group.includes('sports') || name.includes('sports');
+
+            if (isTelugu) {
+                if (isNews) return 3; // Telugu News at the end of Telugu list
+                if (isHD) return 1;   // Telugu HD first
+                return 2;             // Telugu General next
+            }
+
+            if (isHD) return 4;
+            if (isSports) return 5;
+            return 6;
+        }
+
+        function getChannelCategories(channel) {
+            const name = (channel.name || '').toLowerCase();
+            const group = (channel.group || '').toLowerCase();
+            const cats = [];
+
+            if (group.includes('movie') || name.includes('movie') || name.includes('cinema')) cats.push('Movies');
+            
+            if (group.includes('sport') || name.includes('sport')) {
+                cats.push('Sports');
+                if (name.includes('star sports') || name.includes('starsports')) {
+                    cats.push('Star Sports');
+                } else if (name.includes('sony') || name.includes('ten 1') || name.includes('ten 2') || name.includes('ten 3') || name.includes('ten 4') || name.includes('ten 5')) {
+                    cats.push('Sony Sports');
+                } else {
+                    cats.push('Other Sports');
+                }
+            }
+
+            if (name.includes('star sports') || name.includes('starsports') || name.includes('ipl')) cats.push('IPL 2026');
+            if (group.includes('news') || name.includes('news')) cats.push('News');
+            if (group.includes('music') || name.includes('music')) cats.push('Music');
+            if (group.includes('infotainment') || group.includes('knowledge') || group.includes('kids') || group.includes('lifestyle') || name.includes('discovery') || name.includes('history') || name.includes('national geographic')) cats.push('Infotainment');
+            
+            if (cats.length === 0) cats.push('Entertainment');
+            return cats;
+        }
+
+        function renderChannels() {
+            const sortedChannels = [...channels].sort((a, b) => getChannelPriority(a) - getChannelPriority(b));
+            
+            const filteredChannels = sortedChannels.filter(channel => {
+                const term = searchTerm.toLowerCase();
+                const matchesSearch = (channel.name || '').toLowerCase().includes(term) || 
+                                      (channel.group || '').toLowerCase().includes(term);
+                
+                const matchesCategory = selectedCategory === 'All' || getChannelCategories(channel).includes(selectedCategory);
+
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filteredChannels.length === 0) {
+                channelsGrid.innerHTML = '<div class="col-span-full text-center p-10 text-slate-400">No channels found.</div>';
+                return;
+            }
+
+            channelsGrid.innerHTML = filteredChannels.map((channel, index) => {
+                const isActive = currentChannel && currentChannel.link === channel.link;
+                return `
+                <div class="animate-fade-in-up" style="animation-delay: ${index * 20}ms">
+                    <button onclick="playChannel(${index})" class="block h-full w-full text-left focus:outline-none">
+                        <div class="group bg-slate-800 rounded-lg overflow-hidden border transition-all duration-300 relative flex flex-col h-full hover:scale-[1.05] hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] hover:z-10 ${isActive ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'border-slate-700 hover:border-indigo-500'}">
+                            <div class="flex-1 flex items-center justify-center p-2 sm:p-4 bg-[radial-gradient(circle_at_center,#2d3748_0%,#1e293b_70%)]">
+                                <img 
+                                    src="${channel.logo}" 
+                                    alt="${channel.name || 'Channel Logo'}" 
+                                    loading="lazy"
+                                    onerror="this.src='https://picsum.photos/seed/fallback/100/100'"
+                                    class="max-h-[30px] sm:max-h-[50px] object-contain transition-transform duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:scale-110"
+                                />
+                            </div>
+                            <div class="p-1.5 sm:p-3 bg-slate-900/50 border-t border-slate-700 text-center min-h-[40px] sm:min-h-[60px] flex flex-col justify-center">
+                                <h2 class="text-[0.6rem] sm:text-[0.8rem] leading-tight font-semibold mb-0.5 line-clamp-2 ${isActive ? 'text-indigo-400' : 'text-slate-50'}">${channel.name || 'Unknown Channel'}</h2>
+                                <p class="text-[0.5rem] sm:text-[0.65rem] text-slate-400 truncate">${channel.group || 'General'}</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        // Boot the app
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+models:
+  - name: NVIDIA Minimax
+    provider: openai
+    model: minimaxai/minimax-m2.7
+    apiKey: "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"
+    apiBase: "https://integrate.api.nvidia.com/v1"
+
+  - name: NVIDIA Llama 3.1
+    provider: openai
+    model: meta/llama-3.1-70b-instruct
+    apiKey: "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"
+    apiBase: "https://integrate.api.nvidia.com/v1"

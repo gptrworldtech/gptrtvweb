@@ -1,0 +1,20 @@
+{
+  "short_name": "Raghu TV",
+  "name": "Gandreti Raghu Live TV",
+  "icons": [
+    {
+      "src": "https://ik.imagekit.io/kff5oshkqj/IMG_20250911_201953.jpg?updatedAt=1764274502089",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://ik.imagekit.io/kff5oshkqj/IMG_20250911_201953.jpg?updatedAt=1764274502089",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a"
+}

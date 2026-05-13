@@ -1,0 +1,185 @@
+--- App.tsx2026-04-03 10:00:00.000000000 +0530
++++ App.tsx.new2026-04-03 10:05:00.000000000 +0530
+@@ -10,6 +10,16 @@
+   group: string;
+ }
+ 
++const PLAYLISTS: Record<string, string> = {
++  'Jio TV': 'https://raw.githubusercontent.com/alex4528x/m3u/main/jtv.m3u',
++  'Jio Star': 'https://raw.githubusercontent.com/alex4528x/m3u/main/jstar.m3u',
++  'Airtel': 'https://raw.githubusercontent.com/alex4528x/m3u/main/artl.m3u',
++  'Sun TV': 'https://raw.githubusercontent.com/alex4528x/m3u/main/suntv.m3u',
++  'Dish TV': 'https://raw.githubusercontent.com/alex4528x/m3u/main/dishtv.m3u',
++  'Jio Cinema': 'https://raw.githubusercontent.com/alex4528x/m3u/main/jcinema.m3u',
++  'Zee5': 'https://raw.githubusercontent.com/alex4528x/m3u/main/z5.m3u'
++};
++
+ export default function App() {
+   const [channels, setChannels] = useState<Channel[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+@@ -23,6 +33,7 @@
+   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+   const [showInstallBanner, setShowInstallBanner] = useState(false);
+   const [recentChannels, setRecentChannels] = useState<Channel[]>([]);
++  const [currentPlaylist, setCurrentPlaylist] = useState('Jio TV');
+   const playerRef = useRef<HTMLDivElement>(null);
+ 
+   useEffect(() => {
+@@ -58,35 +69,73 @@
+       setShowInstallBanner(true);
+     });
+ 
++    return () => {
++      document.removeEventListener('fullscreenchange', handleFullscreenChange);
++      document.removeEventListener('contextmenu', handleContextMenu);
++      document.removeEventListener('keydown', handleKeyDown);
++    };
++  }, []);
++
++  useEffect(() => {
+     const fetchChannels = async () => {
++      setIsLoading(true);
++      setError('');
+       try {
+-        // Base64 encoded URL to hide it from source plain text
+-        const sourceUrl = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3ZhYXRoYWxhMS9qb3cvbWFpbi9vdXRwdXQuanNvbg==');
+-        const response = await fetch(sourceUrl);
++        const response = await fetch(PLAYLISTS[currentPlaylist]);
+         if (!response.ok) throw new Error('Network response was not ok');
+-        const data = await response.json();
+-        if (Array.isArray(data)) {
+-          setChannels(data);
++        const m3uText = await response.text();
++        
++        const lines = m3uText.split('\n');
++        const parsedChannels: Channel[] = [];
++        let currentCh: any = {};
+ 
+-          let initialChannelToSet = null;
+-          try {
+-            const savedRecentNames = JSON.parse(localStorage.getItem('recentChannelNames') || '[]');
+-            if (Array.isArray(savedRecentNames)) {
+-              const resolvedRecents = savedRecentNames
+-                .map(name => data.find((c: any) => c.name === name))
+-                .filter(Boolean) as Channel[];
+-              setRecentChannels(resolvedRecents);
++        for (let i = 0; i < lines.length; i++) {
++          const line = lines[i].trim();
++          if (!line) continue;
++
++          if (line.startsWith('#EXTINF:')) {
++            const logoMatch = line.match(/tvg-logo="([^"]+)"/);
++            const groupMatch = line.match(/group-title="([^"]+)"/);
++            const nameSplit = line.split(',');
++            
++            currentCh.logo = logoMatch ? logoMatch[1] : '';
++            currentCh.group = groupMatch ? groupMatch[1] : '';
++            currentCh.name = nameSplit.length > 1 ? nameSplit[1].trim() : '';
++          } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
++            const keyData = line.split('=')[1];
++            if (keyData) {
++              const [keyId, key] = keyData.split(':');
++              currentCh.keyId = keyId;
++              currentCh.key = key;
+             }
+-            const savedLastName = localStorage.getItem('lastChannelName');
+-            if (savedLastName) {
+-              initialChannelToSet = data.find((c: any) => c.name === savedLastName);
++          } else if (line.startsWith('#EXTHTTP:')) {
++              try {
++                 const jsonStr = line.replace('#EXTHTTP:', '');
++                 const headers = JSON.parse(jsonStr);
++                 if (headers.cookie) {
++                     currentCh.cookie = headers.cookie;
++                 }
++              } catch(e) {}
++          } else if (!line.startsWith('#')) {
++            if (currentCh.name) {
++              let playerLink = `https://dash.vodep39240327.workers.dev/?url=${encodeURIComponent(line)}`;
++              if (currentCh.keyId && currentCh.key) {
++                playerLink += `&keyId=${currentCh.keyId}&key=${currentCh.key}`;
++              }
++              if (currentCh.cookie) {
++                playerLink += `&cookie=${encodeURIComponent(currentCh.cookie)}`;
++              }
++              parsedChannels.push({
++                name: currentCh.name,
++                logo: currentCh.logo,
++                group: currentCh.group,
++                link: playerLink
++              });
+             }
+-          } catch(e) {}
++            currentCh = {};
++          }
++        }
+ 
+-          if (!initialChannelToSet) {
+-            initialChannelToSet = data.find((c: any) => (c.name || '').toLowerCase() === 'star sports 1 telugu hd');
+-          }
+-          if (initialChannelToSet) {
+-            setCurrentChannel(initialChannelToSet);
+-          }
++        if (parsedChannels.length > 0) {
++          setChannels(parsedChannels);
++          
++          let initialChannelToSet = null;
++          try {
++            const savedRecentNames = JSON.parse(localStorage.getItem('recentChannelNames') || '[]');
++            if (Array.isArray(savedRecentNames)) {
++              const resolvedRecents = savedRecentNames
++                .map(name => parsedChannels.find((c: any) => c.name === name))
++                .filter(Boolean) as Channel[];
++              setRecentChannels(resolvedRecents);
++            }
++            const savedLastName = localStorage.getItem('lastChannelName');
++            if (savedLastName) {
++              initialChannelToSet = parsedChannels.find((c: any) => c.name === savedLastName);
++            }
++          } catch(e) {}
++          
++          if (!initialChannelToSet) {
++            initialChannelToSet = parsedChannels.find((c: any) => (c.name || '').toLowerCase() === 'star sports 1 telugu hd') || parsedChannels[0];
++          }
++          setCurrentChannel(initialChannelToSet);
+         }
+       } catch (err) {
+         console.error('Error fetching data:', err);
+@@ -99,14 +148,8 @@
+     };
+ 
+     fetchChannels();
+-
+-    return () => {
+-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+-      document.removeEventListener('contextmenu', handleContextMenu);
+-      document.removeEventListener('keydown', handleKeyDown);
+-    };
+-  }, []);
++  }, [currentPlaylist]);
+ 
+   useEffect(() => {
+     if (currentChannel) {
+@@ -470,6 +513,20 @@
+               <h2 className="text-[1.2rem] font-bold">Live Channels</h2>
+             </div>
+ 
++            {/* Playlist Selection */}
++            <div className="flex overflow-x-auto gap-2 mb-4 pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
++              {Object.keys(PLAYLISTS).map((pl) => (
++                <button
++                  key={pl}
++                  onClick={() => setCurrentPlaylist(pl)}
++                  className={`px-4 py-1.5 rounded-[8px] text-[0.85rem] font-bold whitespace-nowrap transition-all duration-300 ${
++                    currentPlaylist === pl 
++                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)] border-transparent' 
++                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'
++                  }`}
++                >
++                  {pl}
++                </button>
++              ))}
++            </div>
++
+             {/* Search Bar */}
+             <div className="relative w-full max-w-[400px] mb-4">
