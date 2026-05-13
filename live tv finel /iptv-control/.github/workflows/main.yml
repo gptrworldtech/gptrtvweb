@@ -1,0 +1,47 @@
+name: IPTV Status Checker
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: iptv-status-checker-main
+  cancel-in-progress: true
+
+jobs:
+  check-channels:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Checker Script
+        run: npm start
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add channels.json
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Auto-update: channels.json [skip ci]"
+
+          # Retry rebase+push to handle race windows safely.
+          for i in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || git rebase --abort
+            git push origin HEAD:main && break
+            [ "$i" -eq 3 ] && exit 1
+            sleep 3
+          done
